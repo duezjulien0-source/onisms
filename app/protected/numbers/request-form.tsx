@@ -44,12 +44,11 @@ export function RequestNumberForm({ availableProviders }: Props) {
 
       if ("error" in result) {
         setError(result.error);
-        // @ts-expect-error attempts is attached by requestNumberAuto on failure
-        if (Array.isArray(result.attempts)) setAttempts(result.attempts);
+        const errAttempts = (result as { attempts?: Attempt[] }).attempts;
+        if (Array.isArray(errAttempts)) setAttempts(errAttempts);
       } else {
-        if ("data" in result && result.data && "attempts" in result.data) {
-          setAttempts(result.data.attempts || []);
-        }
+        const data = result.data as { attempts?: Attempt[] } | undefined;
+        if (Array.isArray(data?.attempts)) setAttempts(data.attempts);
         router.refresh();
       }
     });
