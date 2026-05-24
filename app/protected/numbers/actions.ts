@@ -8,6 +8,7 @@ import {
   type ProviderName,
 } from "@/lib/sms-providers";
 import type { Country, Service } from "@/lib/sms-providers/types";
+import { getProviderScore } from "@/lib/scoring";
 import { revalidatePath } from "next/cache";
 
 type ActionResult<T = unknown> =
@@ -109,6 +110,7 @@ export async function requestNumber(
 /**
  * Mode AUTO : essaie tous les fournisseurs disponibles en cascade,
  * tries par prix croissant (le moins cher en premier).
+ * Annote chaque essai avec le score historique du fournisseur.
  */
 export async function requestNumberAuto(
   formData: FormData
@@ -116,7 +118,14 @@ export async function requestNumberAuto(
   ActionResult<{
     orderId: string;
     provider: ProviderName;
-    attempts: Array<{ provider: string; ok: boolean; error?: string; price?: number }>;
+    attempts: Array<{
+      provider: string;
+      ok: boolean;
+      error?: string;
+      price?: number;
+      score?: number | null;
+      attempts7d?: number;
+    }>;
   }>
 > {
   const user = await getAuthUser();
@@ -135,6 +144,8 @@ export async function requestNumberAuto(
     ok: boolean;
     error?: string;
     price?: number;
+    score?: number | null;
+    attempts7d?: number;
   }> = [];
 
   // Etape 1 : interroger les prix en parallele (chaque provider peut avoir plusieurs paliers)
@@ -198,6 +209,15 @@ export async function requestNumberAuto(
     };
   }
 
+  // Etape 2.5 : recuperer les scores historiques (parallele, ~50ms total)
+  const scores = new Map<ProviderName, { rate: number | null; n: number }>();
+  await Promise.all(
+    Array.from(new Set(candidates.map((c) => c.name))).map(async (name) => {
+      const s = await getProviderScore(name, country, service, 7);
+      scores.set(name, { rate: s.successRate, n: s.totalAttempts });
+    })
+  );
+
   // Etape 3 : essayer chaque palier dans l'ordre (avec maxPrice = prix de ce palier)
   for (const candidate of candidates) {
     const providerName = candidate.name;
@@ -205,6 +225,7 @@ export async function requestNumberAuto(
     const providerLabel = candidate.label
       ? `${PROVIDER_LABELS[providerName]} (${candidate.label})`
       : PROVIDER_LABELS[providerName];
+    const score = scores.get(providerName);
     try {
       const client = getProvider(providerName);
       const order = await client.buyNumber({ country, service, maxPrice });
@@ -249,6 +270,8 @@ export async function requestNumberAuto(
           ok: false,
           error: `Sauvegarde DB échouée: ${error.message}`,
           price: candidate.price,
+          score: score?.rate ?? null,
+          attempts7d: score?.n ?? 0,
         });
         continue;
       }
@@ -257,6 +280,8 @@ export async function requestNumberAuto(
         provider: providerLabel,
         ok: true,
         price: candidate.price,
+        score: score?.rate ?? null,
+        attempts7d: score?.n ?? 0,
       });
       revalidatePath("/protected/numbers");
       revalidatePath("/protected");
@@ -271,6 +296,8 @@ export async function requestNumberAuto(
         ok: false,
         error: msg.replace(`${providerName}: `, ""),
         price: candidate.price,
+        score: score?.rate ?? null,
+        attempts7d: score?.n ?? 0,
       });
     }
   }

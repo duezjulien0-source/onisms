@@ -10,7 +10,14 @@ interface Props {
   availableProviders: ProviderName[];
 }
 
-type Attempt = { provider: string; ok: boolean; error?: string; price?: number };
+type Attempt = {
+  provider: string;
+  ok: boolean;
+  error?: string;
+  price?: number;
+  score?: number | null;
+  attempts7d?: number;
+};
 
 export function RequestNumberForm({ availableProviders }: Props) {
   const router = useRouter();
@@ -153,6 +160,25 @@ export function RequestNumberForm({ availableProviders }: Props) {
               {a.price !== undefined && a.price > 0 && (
                 <span className="text-muted-foreground font-mono">
                   ${a.price.toFixed(3)}
+                </span>
+              )}
+              {a.score !== undefined && a.score !== null && (
+                <span
+                  className={`font-mono px-1.5 py-0.5 rounded text-[10px] ${
+                    a.score >= 70
+                      ? "bg-green-500/15 text-green-500"
+                      : a.score >= 40
+                        ? "bg-amber-500/15 text-amber-500"
+                        : "bg-red-500/15 text-red-500"
+                  }`}
+                  title={`${a.attempts7d ?? 0} essais comptés sur 7 jours`}
+                >
+                  {a.score}%
+                </span>
+              )}
+              {a.score === null && a.attempts7d === 0 && (
+                <span className="text-muted-foreground/60 text-[10px] italic">
+                  (pas d&apos;historique)
                 </span>
               )}
               {a.error && (
