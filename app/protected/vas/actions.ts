@@ -4,7 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-type ActionResult = { success: true; message?: string } | { error: string };
+type ActionResult<T = unknown> =
+  | { success: true; data?: T; message?: string }
+  | { error: string };
 
 async function assertAdmin(): Promise<{ ok: true } | ActionResult> {
   const supabase = await createClient();
@@ -57,6 +59,61 @@ export async function inviteVA(formData: FormData): Promise<ActionResult> {
   revalidatePath("/protected/vas");
   revalidatePath("/protected");
   return { success: true, message: `Invitation envoyée à ${email}` };
+}
+
+/**
+ * Cree directement un compte VA avec email + mot de passe.
+ * L'email est auto-confirme (pas besoin de validation par lien).
+ * Le mot de passe doit etre transmis manuellement au VA (Signal/WhatsApp).
+ */
+export async function createVADirect(
+  formData: FormData
+): Promise<ActionResult<{ email: string; password: string }>> {
+  const guard = await assertAdmin();
+  if ("error" in guard) return guard;
+
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  const budget = Number(formData.get("budget") || 0);
+
+  if (!email || !email.includes("@")) {
+    return { error: "Email invalide" };
+  }
+  if (!password || password.length < 8) {
+    return { error: "Mot de passe trop court (8 caractères minimum)" };
+  }
+  if (budget < 0) {
+    return { error: "Budget négatif interdit" };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+
+  if (error) {
+    return { error: `Échec de la création : ${error.message}` };
+  }
+
+  // Delai pour le trigger qui cree le profil
+  await new Promise((r) => setTimeout(r, 300));
+
+  if (data.user && budget > 0) {
+    await admin
+      .from("profiles")
+      .update({ budget_total: budget })
+      .eq("id", data.user.id);
+  }
+
+  revalidatePath("/protected/vas");
+  revalidatePath("/protected");
+  return {
+    success: true,
+    data: { email, password },
+    message: `Compte créé pour ${email}`,
+  };
 }
 
 export async function updateVABudget(formData: FormData): Promise<ActionResult> {
