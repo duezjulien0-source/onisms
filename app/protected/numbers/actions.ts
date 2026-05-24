@@ -229,7 +229,14 @@ export async function requestNumberAuto(
     try {
       const client = getProvider(providerName);
       const order = await client.buyNumber({ country, service, maxPrice });
-      const actualCost = order.cost > 0 ? order.cost : DEFAULT_COST_USD;
+      // Si le provider ne renvoie pas le cout (cas SMS-Activate / HeroSMS),
+      // on prend le prix annonce par getPrice (= maxPrice plafonne).
+      const actualCost =
+        order.cost > 0
+          ? order.cost
+          : candidate.price > 0
+            ? candidate.price
+            : DEFAULT_COST_USD;
 
       // Debit du wallet/budget
       const charged = await chargeVA(user.id, actualCost);
