@@ -80,7 +80,7 @@ export function RequestNumberForm({ availableProviders }: Props) {
             name="service"
             defaultValue="instagram"
             disabled={pending}
-            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm"
+            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm cursor-pointer hover:border-primary/50 transition-colors"
           >
             <option value="instagram">Instagram</option>
             <option value="threads">Threads</option>
@@ -95,7 +95,7 @@ export function RequestNumberForm({ availableProviders }: Props) {
             name="country"
             defaultValue="france"
             disabled={pending}
-            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm"
+            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm cursor-pointer hover:border-primary/50 transition-colors"
           >
             <option value="france">🇫🇷 France</option>
             <option value="uk">🇬🇧 Royaume-Uni</option>
@@ -112,7 +112,7 @@ export function RequestNumberForm({ availableProviders }: Props) {
             name="provider"
             defaultValue="auto"
             disabled={pending}
-            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm"
+            className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm cursor-pointer hover:border-primary/50 transition-colors"
           >
             <option value="auto">⚡ Auto (essaie tous)</option>
             {availableProviders.map((p) => (
