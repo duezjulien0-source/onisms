@@ -1,6 +1,11 @@
+import { Suspense } from "react";
 import { getAgencyWallet, getCurrentProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { RechargeWalletButton } from "./recharge-wallet-button";
+import {
+  ProviderBalances,
+  ProviderBalancesSkeleton,
+} from "./provider-balances";
 
 export default async function DashboardPage() {
   const profile = await getCurrentProfile();
@@ -82,6 +87,12 @@ export default async function DashboardPage() {
           colorClass="text-amber-500"
         />
       </div>
+
+      {profile.role === "admin" && (
+        <Suspense fallback={<ProviderBalancesSkeleton />}>
+          <ProviderBalances />
+        </Suspense>
+      )}
 
       {profile.role === "admin" && (
         <div className="border border-border rounded-lg p-6 bg-card">
