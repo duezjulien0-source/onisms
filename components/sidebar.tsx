@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -41,9 +42,21 @@ export function Sidebar({ profile, wallet }: SidebarProps) {
     <aside className="w-64 bg-card border-r border-border flex flex-col h-screen sticky top-0">
       {/* Branding */}
       <div className="p-4 border-b border-border">
-        <Link href="/protected" className="text-xl font-bold flex items-center gap-1">
-          <span className="text-foreground">Oni</span>
-          <span className="text-primary">SMS</span>
+        <Link href="/protected" className="flex items-center gap-3">
+          <Image
+            src="/oni-logo.svg"
+            alt="ONI"
+            width={40}
+            height={40}
+            className="shrink-0"
+            priority
+          />
+          <div className="flex flex-col leading-none">
+            <span className="text-xl font-bold tracking-tight">ONI</span>
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">
+              Agency · SMS
+            </span>
+          </div>
         </Link>
       </div>
 

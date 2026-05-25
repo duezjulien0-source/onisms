@@ -9,9 +9,12 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "OniSMS — Réception SMS sécurisée",
+  title: "ONI · SMS — Réception SMS sécurisée",
   description:
     "Outil interne d'agrégation de fournisseurs SMS pour les agences marketing",
+  icons: {
+    icon: "/oni-logo.svg",
+  },
 };
 
 const geistSans = Geist({

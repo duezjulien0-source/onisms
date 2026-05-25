@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Red sun background -->
+  <circle cx="100" cy="100" r="88" fill="#dc2626" />
+
+  <!-- Torii gate -->
+  <!-- Top beam (kasagi) with curved silhouette -->
+  <path d="M 28 70 Q 100 56 172 70 L 172 84 Q 100 72 28 84 Z" fill="#0a0a0a" />
+  <!-- Second horizontal beam (nuki) -->
+  <rect x="42" y="92" width="116" height="10" fill="#0a0a0a" />
+  <!-- Left pillar (tapered) -->
+  <path d="M 58 78 L 66 78 L 70 170 L 54 170 Z" fill="#0a0a0a" />
+  <!-- Right pillar (tapered) -->
+  <path d="M 134 78 L 142 78 L 146 170 L 130 170 Z" fill="#0a0a0a" />
+</svg>
