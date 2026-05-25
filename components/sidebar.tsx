@@ -13,13 +13,14 @@ import {
 import type { Profile, AgencyWallet } from "@/lib/profile";
 import { LogoutButton } from "./logout-button";
 import { ThemeSwitcher } from "./theme-switcher";
+import { TotalBalanceLive } from "./total-balance-live";
 
 interface SidebarProps {
   profile: Profile;
   wallet: AgencyWallet | null;
 }
 
-export function Sidebar({ profile, wallet }: SidebarProps) {
+export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -32,11 +33,6 @@ export function Sidebar({ profile, wallet }: SidebarProps) {
 
   const displayName = profile.display_name || profile.email.split("@")[0];
   const initial = displayName.substring(0, 1).toUpperCase();
-
-  const usagePct =
-    wallet && wallet.total_recharged > 0
-      ? Math.min(100, ((wallet.total_recharged - wallet.balance) / wallet.total_recharged) * 100)
-      : 0;
 
   return (
     <aside className="w-64 bg-card border-r border-border flex flex-col h-screen sticky top-0">
@@ -77,26 +73,8 @@ export function Sidebar({ profile, wallet }: SidebarProps) {
         </div>
       </div>
 
-      {/* Wallet card */}
-      {wallet && (
-        <div className="p-4 border-b border-border">
-          <div className="text-[10px] uppercase text-muted-foreground tracking-wider">
-            Balance Agence
-          </div>
-          <div className="text-xl font-bold text-green-500 mt-1">
-            ${wallet.balance.toFixed(2)}
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            / ${wallet.total_recharged.toFixed(2)}
-          </div>
-          <div className="h-1 bg-muted rounded mt-2 overflow-hidden">
-            <div
-              className="h-full bg-green-500 transition-all"
-              style={{ width: `${usagePct}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Balance live (somme des soldes fournisseurs, refresh auto 30s) */}
+      <TotalBalanceLive />
 
       {/* Navigation */}
       <nav className="flex-1 py-3 px-2 space-y-1">
