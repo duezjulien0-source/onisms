@@ -30,12 +30,12 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="Numéros aujourd'hui" value="0" colorClass="text-primary" />
+        <StatCard label="Numéros aujourd'hui" value="0" colorClass="text-green-500" />
         <StatCard label="Coût aujourd'hui" value="$0.000" colorClass="text-green-500" />
         <StatCard
           label="VAs actifs"
           value={String(activeVas ?? 0)}
-          colorClass="text-amber-500"
+          colorClass="text-green-500"
         />
       </div>
 
@@ -43,17 +43,6 @@ export default async function DashboardPage() {
         <Suspense fallback={<ProviderBalancesSkeleton />}>
           <ProviderBalances />
         </Suspense>
-      )}
-
-      {profile.role === "admin" && (
-        <div className="border border-border rounded-lg p-6 bg-card">
-          <h2 className="font-semibold mb-2">VAs ({activeVas ?? 0})</h2>
-          <p className="text-sm text-muted-foreground">
-            {(activeVas ?? 0) === 0
-              ? "Aucun VA pour le moment. Allez dans « Mes VAs » pour en inviter."
-              : "Voir la liste complète dans « Mes VAs »."}
-          </p>
-        </div>
       )}
     </div>
   );
