@@ -11,6 +11,27 @@ import type { Country, Service } from "@/lib/sms-providers/types";
 import { getProviderScore } from "@/lib/scoring";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Detecte les erreurs qui signifient "la commande n'existe deja plus chez le provider"
+ * (timeout cote provider, deja cloturee, ID inconnu, etc.).
+ * Dans ces cas on doit quand meme MAJ notre DB pour refleter le bon etat.
+ */
+function isProviderOrderGone(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return (
+    msg.includes("order not found") ||
+    msg.includes("no_active_id") ||
+    msg.includes("invalid_id") ||
+    msg.includes("already finished") ||
+    msg.includes("already canceled") ||
+    msg.includes("activation_id") ||
+    msg.includes("not_found") ||
+    msg.includes("expired") ||
+    msg.includes("http 400") ||
+    msg.includes("http 404")
+  );
+}
+
 type ActionResult<T = unknown> =
   | { success: true; data?: T; message?: string }
   | { error: string };
@@ -393,7 +414,12 @@ export async function cancelOrder(
 
   try {
     const client = getProvider(order.provider as ProviderName);
-    await client.cancelOrder(order.provider_order_id);
+    try {
+      await client.cancelOrder(order.provider_order_id);
+    } catch (e) {
+      // Si le provider dit "deja fini / introuvable", on accepte et on continue
+      if (!isProviderOrderGone(e)) throw e;
+    }
 
     // Rembourser le VA si pas de code reellement utilise
     // (pending OU received sans code = fausse alerte du provider)
@@ -435,7 +461,13 @@ export async function finishOrder(
 
   try {
     const client = getProvider(order.provider as ProviderName);
-    await client.finishOrder(order.provider_order_id);
+    try {
+      await client.finishOrder(order.provider_order_id);
+    } catch (e) {
+      // Le provider a deja cloture la commande de son cote (timeout, etc.)
+      // On accepte et on continue pour MAJ notre DB
+      if (!isProviderOrderGone(e)) throw e;
+    }
 
     await supabase
       .from("sms_orders")
