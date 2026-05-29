@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Phone, Users } from "lucide-react";
+import { LayoutDashboard, Phone, Users, History } from "lucide-react";
 import type { Profile, AgencyWallet } from "@/lib/profile";
 import { LogoutButton } from "./logout-button";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -21,6 +21,7 @@ export function Sidebar({ profile }: SidebarProps) {
     { href: "/protected", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/protected/numbers", label: "Mes numéros", icon: Phone, show: true },
     { href: "/protected/vas", label: "Mes VAs", icon: Users, show: profile.role === "admin" },
+    { href: "/protected/history", label: "Historique", icon: History, show: true },
   ];
 
   const displayName = profile.display_name || profile.email.split("@")[0];
