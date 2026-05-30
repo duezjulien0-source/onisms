@@ -39,6 +39,49 @@ type ActionResult<T = unknown> =
 // Cout par defaut si le provider ne retourne pas de prix (ex: protocole SMS-Activate)
 const DEFAULT_COST_USD = 0.5;
 
+/**
+ * Nettoie les messages d'erreur des fournisseurs pour affichage UI :
+ * - retire les balises HTML
+ * - extrait les messages cles du JSON
+ * - traduit les erreurs frequentes en francais
+ * - tronque si trop long
+ */
+function sanitizeError(rawMsg: string): string {
+  let m = rawMsg.replace(/<[^>]*>/g, " "); // strip HTML
+  // Si JSON, tente d'extraire le champ "message"
+  const jsonMatch = m.match(/"message"\s*:\s*"([^"]+)"/);
+  if (jsonMatch) m = jsonMatch[1];
+
+  const lower = m.toLowerCase();
+
+  if (lower.includes("insufficient balance") || lower.includes("not enough money") || lower.includes("not_enough_money")) {
+    return "solde insuffisant chez le fournisseur (à recharger)";
+  }
+  if (lower.includes("no free phones") || lower.includes("no_numbers") || lower.includes("not_found_country") || lower.includes("aucun numero")) {
+    return "plus de stock";
+  }
+  if (lower.includes("could not find a suitable pool") || lower.includes("price_not_found")) {
+    return "aucun numéro disponible au prix max demandé";
+  }
+  if (lower.includes("balance_error")) {
+    return "erreur de solde côté fournisseur";
+  }
+  if (lower.includes("bad_key") || lower.includes("wrong_user_key")) {
+    return "clé API invalide";
+  }
+  if (lower.includes("banned")) {
+    return "compte ou opérateur banni";
+  }
+  if (lower.includes("http 400") || lower.includes("http 401") || lower.includes("http 403")) {
+    return "requête refusée par le fournisseur";
+  }
+
+  // Tronque si toujours trop long
+  m = m.replace(/\s+/g, " ").trim();
+  if (m.length > 90) m = m.substring(0, 87) + "…";
+  return m;
+}
+
 async function getAuthUser() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
@@ -249,7 +292,18 @@ export async function requestNumberAuto(
     const score = scores.get(providerName);
     try {
       const client = getProvider(providerName);
-      const order = await client.buyNumber({ country, service, maxPrice });
+      // Pour 5SIM, on passe le label comme operateur (lebara, virtual51, etc.)
+      // sinon 5SIM utilise "any" et ignore notre maxPrice cible
+      const operator =
+        providerName === "5sim" && candidate.label
+          ? candidate.label
+          : undefined;
+      const order = await client.buyNumber({
+        country,
+        service,
+        maxPrice,
+        operator,
+      });
       // Si le provider ne renvoie pas le cout (cas SMS-Activate / HeroSMS),
       // on prend le prix annonce par getPrice (= maxPrice plafonne).
       const actualCost =
@@ -322,7 +376,7 @@ export async function requestNumberAuto(
       attempts.push({
         provider: providerLabel,
         ok: false,
-        error: msg.replace(`${providerName}: `, ""),
+        error: sanitizeError(msg.replace(`${providerName}: `, "")),
         price: candidate.price,
         score: score?.rate ?? null,
         attempts7d: score?.n ?? 0,

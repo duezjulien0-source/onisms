@@ -108,15 +108,19 @@ class FiveSIMProvider implements SMSProvider {
     country: Country;
     service: Service;
     maxPrice?: number;
+    operator?: string;
   }): Promise<NumberOrder> {
     const country = COUNTRY_MAP[opts.country];
     const service = SERVICE_MAP[opts.service];
-    // 5SIM supporte maxPrice en query param
-    const qs = opts.maxPrice && opts.maxPrice > 0
-      ? `?maxPrice=${opts.maxPrice}`
-      : "";
+    // Utilise l'operateur specifique si fourni, sinon 'any' (5SIM choisira)
+    const operator = opts.operator && opts.operator.trim() ? opts.operator : "any";
+    // 5SIM supporte maxPrice en query param (+5% de marge pour fluctuations de prix)
+    const qs =
+      opts.maxPrice && opts.maxPrice > 0
+        ? `?maxPrice=${(opts.maxPrice * 1.05).toFixed(4)}`
+        : "";
     const data = (await this.request(
-      `/user/buy/activation/${country}/any/${service}${qs}`
+      `/user/buy/activation/${country}/${operator}/${service}${qs}`
     )) as {
       id?: number | string;
       phone?: string;

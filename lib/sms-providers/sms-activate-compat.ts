@@ -110,6 +110,8 @@ class SMSActivateCompatProvider implements SMSProvider {
   async buyNumber(opts: {
     country: Country;
     service: Service;
+    maxPrice?: number; // pas utilise par ce protocole
+    operator?: string; // pas utilise par ce protocole
   }): Promise<NumberOrder> {
     const text = await this.request("getNumber", {
       service: SERVICE_MAP[opts.service],

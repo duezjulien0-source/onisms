@@ -108,6 +108,7 @@ class SMSPoolProvider implements SMSProvider {
     country: Country;
     service: Service;
     maxPrice?: number;
+    operator?: string; // pas utilise par SMSPool, juste pour conformer a l'interface
   }): Promise<NumberOrder> {
     const params: Record<string, string> = {
       country: COUNTRY_MAP[opts.country],

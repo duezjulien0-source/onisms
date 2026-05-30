@@ -55,11 +55,14 @@ export interface SMSProvider {
   getPrice(opts: { country: Country; service: Service }): Promise<PriceInfo>;
 
   /** Achete un numero pour un service/pays donne.
-   * Si maxPrice est fourni, le fournisseur ne facturera pas au-dessus (echec sinon). */
+   * - maxPrice : plafond de prix (le fournisseur refuse si pas dispo en dessous)
+   * - operator : nom de l'operateur specifique (utile pour 5SIM qui a lebara, virtual51, etc.)
+   */
   buyNumber(opts: {
     country: Country;
     service: Service;
     maxPrice?: number;
+    operator?: string;
   }): Promise<NumberOrder>;
 
   /** Verifie si un SMS est arrive pour cette commande */
